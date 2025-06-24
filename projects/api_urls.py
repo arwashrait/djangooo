@@ -2,7 +2,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .api_views import ProjectViewSet 
+from .api_views import ProjectViewSet
 
 router = DefaultRouter()
 # Register ProjectViewSet with an empty prefix for the root of the API path
@@ -19,4 +19,3 @@ urlpatterns = [
     # etc.
     path('', include(router.urls)),
 ]
-

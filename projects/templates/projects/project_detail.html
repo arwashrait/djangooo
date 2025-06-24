@@ -1,168 +1,160 @@
-{% comment %} {% extends 'base.html' %} {% endcomment %}
+{% load static %} {# If you use static files for global CSS/JS, remember to add this #}
 
-{% block title %}{{ project.title }}{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        #slider-container {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        #image-slider img {
+            width: 100%;
+            flex-shrink: 0;
+            object-fit: cover;
+            height: 450px; /* Adjusted height for better display */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto p-4 md:p-8 lg:p-12">
+        <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 lg:p-10 mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{{ project.title }}</h1>
+            <p class="text-gray-700 text-base md:text-lg mb-6">{{ project.details }}</p>
 
-{% block content %}
-    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ project.title }}</h1>
-        <p class="text-gray-600 text-lg mb-6">{{ project.details }}</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <!-- Project Information -->
-            <div>
-                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Category:</strong> <span class="font-medium text-indigo-700">{{ project.category.name }}</span></p>
-                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Target:</strong> {{ project.total_target|floatformat:0 }} {{ project.currency }}</p>
-                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Started On:</strong> {{ project.start_time|date:"M d, Y" }}</p>
-                <p class="text-gray-700 mb-4"><strong class="text-gray-800">Ends On:</strong> {{ project.end_time|date:"M d, Y" }}</p>
-
-                <div class="mb-4">
-                    <div class="flex justify-between text-gray-800 text-xl font-bold mb-1">
-                        <!-- CORRECTED: Use get_current_fund property -->
-                        <span>{{ project.get_current_fund|floatformat:0 }} {{ project.currency }}</span>
-                        <span>of {{ project.total_target|floatformat:0 }} {{ project.currency }}</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3.5">
-                        {% if project.total_target > 0 %}
-                            <!-- CORRECTED: Use get_percentage_funded property -->
-                            <div class="bg-green-500 h-3.5 rounded-full" style="width: {{ project.get_percentage_funded|floatformat:0 }}%;"></div>
-                        {% else %}
-                            <div class="bg-gray-400 h-3.5 rounded-full" style="width: 0%;"></div>
-                        {% endif %}
-                    </div>
-                    {% if project.total_target > 0 %}
-                        <!-- CORRECTED: Use get_percentage_funded property -->
-                        <p class="text-sm text-gray-500 mt-1 text-right">{{ project.get_percentage_funded|floatformat:0 }}% Funded</p>
-                    {% endif %}
-                </div>
-
-                <div class="flex items-center text-xl text-gray-800 mb-4">
-                    <strong class="mr-2">Average Rating:</strong>
-                    <!-- CORRECTED: Use get_average_rating property -->
-                    {% if project.get_average_rating %}
-                        <span class="flex items-center">
-                            <svg class="w-5 h-5 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.683-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.565-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
-                            </svg>
-                            {{ project.get_average_rating|floatformat:1 }}/5
-                        </span>
-                    {% else %}
-                        <span class="text-gray-500">No ratings yet.</span>
-                    {% endif %}
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex space-x-4 mt-6">
-                    {% if user.is_authenticated and user == project.owner %}
-                        <a href="{% url 'projects:update' project.pk %}" class="bg-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Edit Project</a>
-<a href="{% url 'projects:delete' project.pk %}" class="bg-red-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-red-700 transition duration-300">Delete Project</a>
-                        <!-- Add Cancel Project Button - this would need a view function and URL -->
-                        <!-- CORRECTED: Use get_current_fund and quarter_target property -->
-                        {% if project.get_current_fund < project.quarter_target %}
-                            <form action="{% url 'projects:cancel' project.pk %}" method="post" onsubmit="return confirm('Are you sure you want to cancel this project? All donations will be refunded.');" class="inline-block">
-                                {% csrf_token %}
-                                <button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-orange-600 transition duration-300">Cancel Project</button>
-                            </form>
-                        {% endif %}
-                    {% endif %}
-                    <a href="{% url 'projects:list' %}" class="bg-gray-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-gray-600 transition duration-300">Back to Projects</a>
-                </div>
-            </div>
-
-            <!-- Image Slider Section -->
-            <div class="relative w-full overflow-hidden rounded-lg shadow-md" id="image-slider">
-                {% if project.pictures.exists %}
-                    <div class="flex transition-transform duration-500 ease-in-out" id="slider-container">
-                        {% for pic in project.pictures.all %}
-                            <img src="{{ pic.image_file.url }}" alt="{{ project.title }} picture {{ forloop.counter }}" class="w-full flex-shrink-0 object-cover h-96">
-                        {% endfor %}
-                    </div>
-                    <!-- Navigation buttons -->
-                    <button class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="prevSlide()">&#10094;</button>
-                    <button class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="nextSlide()">&#10095;</button>
-                {% else %}
-                    <img src="https://placehold.co/600x400/CCCCCC/000000?text=No+Images" alt="No Images Available" class="w-full object-cover h-96">
-                {% endif %}
-            </div>
-        </div>
-
-        <hr class="my-8 border-gray-300">
-
-        <!-- Donation Section -->
-        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Make a Donation</h2>
-        {% if user.is_authenticated %}
-            <form action="{% url 'projects:donate' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label for="{{ donation_form.amount.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Donation Amount ({{ project.currency }})</label>
-                    {{ donation_form.amount }}
-                    {% if donation_form.amount.errors %}
-                        <p class="text-red-500 text-xs italic">{{ donation_form.amount.errors }}</p>
-                    {% endif %}
-                </div>
-                <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition duration-300">Donate Now</button>
-            </form>
-        {% else %}
-            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to make a donation.</p>
-        {% endif %}
-
-        <hr class="my-8 border-gray-300">
-
-        <!-- Rating Section -->
-        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Rate This Project</h2>
-        {% if user.is_authenticated %}
-            <form action="{% url 'projects:rate' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner flex items-center space-x-4">
-                {% csrf_token %}
-                <label for="{{ rating_form.value.id_for_label }}" class="block text-gray-700 text-sm font-bold">Your Rating:</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                 <div>
-                    {{ rating_form.value }}
-                    {% if rating_form.value.errors %}
-                        <p class="text-red-500 text-xs italic">{{ rating_form.value.errors }}</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-gray-800">Category:</strong> <span class="font-medium text-indigo-700">{{ project.category.name }}</span></p>
+                    <p class="text-gray-700 mb-2"><strong class="text-gray-800">Target:</strong> {{ project.total_target|floatformat:0 }} EGP</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-gray-800">Started On:</strong> {{ project.start_time|date:"M d, Y" }}</p>
+                    <p class="text-gray-700 mb-4"><strong class="text-gray-800">Ends On:</strong> {{ project.end_time|date:"M d, Y" }}</p>
+
+                    <div class="mb-4">
+                        <div class="flex justify-between text-gray-800 text-lg font-bold mb-1">
+                            <span>{{ project.total_donations_collected|floatformat:0 }} EGP</span>
+                            <span>of {{ project.total_target|floatformat:0 }} EGP</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3.5">
+                            {% if project.total_target > 0 %}
+                                <div class="bg-green-500 h-3.5 rounded-full" style="width: {{ project.percent_funded|floatformat:0 }}%;"></div>
+                            {% else %}
+                                <div class="bg-gray-400 h-3.5 rounded-full" style="width: 0%;"></div>
+                            {% endif %}
+                        </div>
+                        {% if project.total_target > 0 %}
+                            <p class="text-sm text-gray-500 mt-1 text-right">{{ project.percent_funded|floatformat:0 }}% Funded</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center text-lg text-gray-800 mb-4">
+                        <strong class="mr-2">Average Rating:</strong>
+                        {% if project.average_rating %}
+                            <span class="flex items-center">
+                                <svg class="w-5 h-5 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.683-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.565-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+                                </svg>
+                                {{ project.average_rating|floatformat:1 }}/5 ({{ project.rating_count }} reviews)
+                            </span>
+                        {% else %}
+                            <span class="text-gray-500">No ratings yet.</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="{% url 'projects:list' %}" class="bg-gray-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-gray-600 transition duration-300">Back to Projects</a>
+                    </div>
+                </div>
+
+                <div class="relative w-full overflow-hidden rounded-lg shadow-md" id="image-slider">
+                    {% if project.pictures.exists %}
+                        <div class="flex transition-transform duration-500 ease-in-out" id="slider-container">
+                            {% for pic in project.pictures.all %}
+                                <img src="{{ pic.image.url }}" alt="{{ project.title }} picture {{ forloop.counter }}" class="w-full flex-shrink-0 object-cover h-96">
+                            {% endfor %}
+                        </div>
+                        <button class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="prevSlide()">&#10094;</button>
+                        <button class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="nextSlide()">&#10095;</button>
+                    {% else %}
+                        <img src="https://placehold.co/600x400/CCCCCC/000000?text=No+Images" alt="No Images Available" class="w-full object-cover h-96">
                     {% endif %}
                 </div>
-                <button type="submit" class="bg-yellow-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-yellow-600 transition duration-300">Submit Rating</button>
-            </form>
-        {% else %}
-            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to rate this project.</p>
-        {% endif %}
-
-        <hr class="my-8 border-gray-300">
-
-        <!-- Comment Section -->
-        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Comments</h2>
-        {% if user.is_authenticated %}
-            <form action="{% url 'projects:add_comment' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label for="{{ comment_form.content.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Add a Comment</label>
-                    {{ comment_form.content }}
-                    {% if comment_form.content.errors %}
-                        <p class="text-red-500 text-xs italic">{{ comment_form.content.errors }}</p>
-                    {% endif %}
-                </div>
-                <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-700 transition duration-300">Post Comment</button>
-            </form>
-        {% else %}
-            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to add a comment.</p>
-        {% endif %}
-
-        {% comment %} {% if project.comments.all %}
-            <div class="space-y-6">
-          {% for comment in project.comments.all %}
-    {# ... comment display ... #}
-    <!-- Look here specifically -->
-    <div class="mt-3 text-sm flex space-x-3">
-        <a href="{% url 'comments:reply_comment' comment.id %}" class="text-blue-600 hover:underline">Reply</a>
-        <a href="{% url 'comments:report_comment' comment.id %}" class="text-red-600 hover:underline">Report</a>
-    </div>
-{% endfor %} {% endcomment %}
-{% comment %} <a href="{% url 'comments:add_comment' project.id %}" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-700 transition duration-300">Post Comment</a> {% endcomment %}
-{% comment %} 
             </div>
-        {% else %}
-            <p class="text-center text-gray-600 text-lg">No comments yet. Be the first to comment!</p>
-        {% endif %} {% endcomment %}
 
-    </div>
+            <hr class="my-8 border-gray-300">
+
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">Make a Donation</h2>
+            <p class="text-gray-600 text-lg mb-4">Donations for this project are managed externally or require a user account.</p>
+
+            <hr class="my-8 border-gray-300">
+
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">Rate This Project</h2>
+            <p class="text-gray-600 mb-4">Project rating requires a user account.</p>
+
+            <hr class="my-8 border-gray-300">
+
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">Comments</h2>
+            <p class="text-gray-600 mb-4">To add a comment, you need a user account.</p>
+
+            {% if project.comments.exists %}
+                <div class="space-y-6 mt-6">
+                    {# Loop through top-level comments (those without a parent) #}
+                    {% for comment in project.comments.all %}
+                        {% if not comment.parent %} {# Only display top-level comments here #}
+                            {# The comment_card.html should also be user-agnostic if possible, or display limited info #}
+                            {% include "projects/includes/comment_card.html" with comment=comment project=project %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-gray-600 text-lg">No comments yet.</p>
+            {% endif %}
+
+            <hr class="my-8 border-gray-300">
+
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">Similar Projects</h2>
+            {% if similar_projects %} {# Assuming you pass similar_projects from context in views.py #}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for sim_project in similar_projects %}
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden transition transform hover:scale-105 duration-300 ease-in-out">
+                            {% if sim_project.pictures.first %}
+                                <img src="{{ sim_project.pictures.first.image.url }}" alt="{{ sim_project.title }}" class="w-full h-32 object-cover">
+                            {% else %}
+                                <img src="https://placehold.co/400x200/CCCCCC/000000?text=No+Image" alt="No Image" class="w-full h-32 object-cover">
+                            {% endif %}
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ sim_project.title }}</h3>
+                                <p class="text-gray-600 text-sm mb-2">{{ sim_project.details|truncatechars:70 }}</p>
+                                <div class="flex justify-between items-center text-sm text-gray-500">
+                                    <span>Funded: {{ sim_project.percent_funded|floatformat:0 }}%</span>
+                                    {% if sim_project.average_rating %}
+                                        <span class="flex items-center">
+                                            <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.683-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.565-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+                                            </svg>
+                                            {{ sim_project.average_rating|floatformat:1 }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'projects:detail' sim_project.pk %}" class="block mt-3 text-center bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-indigo-600 transition duration-300">View Details</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-gray-600">No similar projects found.</p>
+            {% endif %}
+        </div>
 
     <script>
         let currentSlide = 0;
@@ -189,9 +181,8 @@
             if (totalSlides > 0) {
                 showSlide(0); // Show the first slide
             }
+            // Removed all user/report related JS event listeners and modal logic
         });
-
-        // Auto-advance slider (optional)
-        // setInterval(nextSlide, 5000); // Change image every 5 seconds
     </script>
-{% endblock %}
+</body>
+</html>
