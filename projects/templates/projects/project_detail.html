@@ -1,0 +1,197 @@
+{% comment %} {% extends 'base.html' %} {% endcomment %}
+
+{% block title %}{{ project.title }}{% endblock %}
+
+{% block content %}
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ project.title }}</h1>
+        <p class="text-gray-600 text-lg mb-6">{{ project.details }}</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Project Information -->
+            <div>
+                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Category:</strong> <span class="font-medium text-indigo-700">{{ project.category.name }}</span></p>
+                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Target:</strong> {{ project.total_target|floatformat:0 }} {{ project.currency }}</p>
+                <p class="text-gray-700 mb-2"><strong class="text-gray-800">Started On:</strong> {{ project.start_time|date:"M d, Y" }}</p>
+                <p class="text-gray-700 mb-4"><strong class="text-gray-800">Ends On:</strong> {{ project.end_time|date:"M d, Y" }}</p>
+
+                <div class="mb-4">
+                    <div class="flex justify-between text-gray-800 text-xl font-bold mb-1">
+                        <!-- CORRECTED: Use get_current_fund property -->
+                        <span>{{ project.get_current_fund|floatformat:0 }} {{ project.currency }}</span>
+                        <span>of {{ project.total_target|floatformat:0 }} {{ project.currency }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3.5">
+                        {% if project.total_target > 0 %}
+                            <!-- CORRECTED: Use get_percentage_funded property -->
+                            <div class="bg-green-500 h-3.5 rounded-full" style="width: {{ project.get_percentage_funded|floatformat:0 }}%;"></div>
+                        {% else %}
+                            <div class="bg-gray-400 h-3.5 rounded-full" style="width: 0%;"></div>
+                        {% endif %}
+                    </div>
+                    {% if project.total_target > 0 %}
+                        <!-- CORRECTED: Use get_percentage_funded property -->
+                        <p class="text-sm text-gray-500 mt-1 text-right">{{ project.get_percentage_funded|floatformat:0 }}% Funded</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center text-xl text-gray-800 mb-4">
+                    <strong class="mr-2">Average Rating:</strong>
+                    <!-- CORRECTED: Use get_average_rating property -->
+                    {% if project.get_average_rating %}
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.683-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.565-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+                            </svg>
+                            {{ project.get_average_rating|floatformat:1 }}/5
+                        </span>
+                    {% else %}
+                        <span class="text-gray-500">No ratings yet.</span>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-4 mt-6">
+                    {% if user.is_authenticated and user == project.owner %}
+                        <a href="{% url 'projects:update' project.pk %}" class="bg-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Edit Project</a>
+<a href="{% url 'projects:delete' project.pk %}" class="bg-red-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-red-700 transition duration-300">Delete Project</a>
+                        <!-- Add Cancel Project Button - this would need a view function and URL -->
+                        <!-- CORRECTED: Use get_current_fund and quarter_target property -->
+                        {% if project.get_current_fund < project.quarter_target %}
+                            <form action="{% url 'projects:cancel' project.pk %}" method="post" onsubmit="return confirm('Are you sure you want to cancel this project? All donations will be refunded.');" class="inline-block">
+                                {% csrf_token %}
+                                <button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-orange-600 transition duration-300">Cancel Project</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                    <a href="{% url 'projects:list' %}" class="bg-gray-500 text-white px-5 py-2 rounded-md font-semibold hover:bg-gray-600 transition duration-300">Back to Projects</a>
+                </div>
+            </div>
+
+            <!-- Image Slider Section -->
+            <div class="relative w-full overflow-hidden rounded-lg shadow-md" id="image-slider">
+                {% if project.pictures.exists %}
+                    <div class="flex transition-transform duration-500 ease-in-out" id="slider-container">
+                        {% for pic in project.pictures.all %}
+                            <img src="{{ pic.image_file.url }}" alt="{{ project.title }} picture {{ forloop.counter }}" class="w-full flex-shrink-0 object-cover h-96">
+                        {% endfor %}
+                    </div>
+                    <!-- Navigation buttons -->
+                    <button class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="prevSlide()">&#10094;</button>
+                    <button class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 focus:outline-none" onclick="nextSlide()">&#10095;</button>
+                {% else %}
+                    <img src="https://placehold.co/600x400/CCCCCC/000000?text=No+Images" alt="No Images Available" class="w-full object-cover h-96">
+                {% endif %}
+            </div>
+        </div>
+
+        <hr class="my-8 border-gray-300">
+
+        <!-- Donation Section -->
+        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Make a Donation</h2>
+        {% if user.is_authenticated %}
+            <form action="{% url 'projects:donate' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="{{ donation_form.amount.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Donation Amount ({{ project.currency }})</label>
+                    {{ donation_form.amount }}
+                    {% if donation_form.amount.errors %}
+                        <p class="text-red-500 text-xs italic">{{ donation_form.amount.errors }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition duration-300">Donate Now</button>
+            </form>
+        {% else %}
+            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to make a donation.</p>
+        {% endif %}
+
+        <hr class="my-8 border-gray-300">
+
+        <!-- Rating Section -->
+        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Rate This Project</h2>
+        {% if user.is_authenticated %}
+            <form action="{% url 'projects:rate' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner flex items-center space-x-4">
+                {% csrf_token %}
+                <label for="{{ rating_form.value.id_for_label }}" class="block text-gray-700 text-sm font-bold">Your Rating:</label>
+                <div>
+                    {{ rating_form.value }}
+                    {% if rating_form.value.errors %}
+                        <p class="text-red-500 text-xs italic">{{ rating_form.value.errors }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="bg-yellow-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-yellow-600 transition duration-300">Submit Rating</button>
+            </form>
+        {% else %}
+            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to rate this project.</p>
+        {% endif %}
+
+        <hr class="my-8 border-gray-300">
+
+        <!-- Comment Section -->
+        <h2 class="text-3xl font-semibold text-gray-900 mb-4">Comments</h2>
+        {% if user.is_authenticated %}
+            <form action="{% url 'projects:add_comment' project.pk %}" method="post" class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="{{ comment_form.content.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">Add a Comment</label>
+                    {{ comment_form.content }}
+                    {% if comment_form.content.errors %}
+                        <p class="text-red-500 text-xs italic">{{ comment_form.content.errors }}</p>
+                    {% endif %}
+                </div>
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-700 transition duration-300">Post Comment</button>
+            </form>
+        {% else %}
+            <p class="text-gray-600 mb-4">Please <a href="{% url 'login' %}" class="text-blue-600 hover:underline">log in</a> to add a comment.</p>
+        {% endif %}
+
+        {% comment %} {% if project.comments.all %}
+            <div class="space-y-6">
+          {% for comment in project.comments.all %}
+    {# ... comment display ... #}
+    <!-- Look here specifically -->
+    <div class="mt-3 text-sm flex space-x-3">
+        <a href="{% url 'comments:reply_comment' comment.id %}" class="text-blue-600 hover:underline">Reply</a>
+        <a href="{% url 'comments:report_comment' comment.id %}" class="text-red-600 hover:underline">Report</a>
+    </div>
+{% endfor %} {% endcomment %}
+{% comment %} <a href="{% url 'comments:add_comment' project.id %}" class="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-700 transition duration-300">Post Comment</a> {% endcomment %}
+{% comment %} 
+            </div>
+        {% else %}
+            <p class="text-center text-gray-600 text-lg">No comments yet. Be the first to comment!</p>
+        {% endif %} {% endcomment %}
+
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('#slider-container img');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            if (totalSlides === 0) return;
+            currentSlide = (index + totalSlides) % totalSlides;
+            const offset = -currentSlide * 100;
+            document.getElementById('slider-container').style.transform = `translateX(${offset}%)`;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Initialize slider on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (totalSlides > 0) {
+                showSlide(0); // Show the first slide
+            }
+        });
+
+        // Auto-advance slider (optional)
+        // setInterval(nextSlide, 5000); // Change image every 5 seconds
+    </script>
+{% endblock %}
