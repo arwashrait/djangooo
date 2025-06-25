@@ -170,7 +170,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     donations = DonationSerializer(many=True, read_only=True)
     ratings = RatingSerializer(many=True, read_only=True)
-    comments = CommentSerializer(many=True, read_only=True, source='comments') # Nested comments with replies
+    comments = CommentSerializer(many=True, read_only=True) 
 
     # Direct fields from model (cached values)
     average_rating = serializers.FloatField(read_only=True)
