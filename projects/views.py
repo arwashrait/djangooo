@@ -26,7 +26,7 @@ class ProjectListView(ListView):
     paginate_by = 10
     # Optional: Add an ordering to prevent UnorderedObjectListWarning if not already handled
     # queryset = Project.objects.all().order_by('-created_at')
-
+    queryset = Project.objects.all().order_by('-created_at') 
 
 class ProjectDetailView(DetailView):
     model = Project

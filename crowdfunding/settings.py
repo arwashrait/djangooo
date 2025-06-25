@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'projects',
         'django.contrib.humanize',  # For template filters
+        'rest_framework',
 
 ]
 

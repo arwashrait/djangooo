@@ -21,9 +21,9 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-        # path('', include(('projects.urls','projects'),namespace='projects')),
            path('', include('projects.urls')),
-        path('api/', include('projects.api_urls')), 
+            path('api/projects/', include('projects.api_urls')), 
+
 
 ]
 
