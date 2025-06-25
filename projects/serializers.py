@@ -3,7 +3,7 @@ from django.db.models import Avg, Sum, Count # Ensure Count is imported
 from django.contrib.auth import get_user_model # Import get_user_model
 from .models import (
     Project, ProjectPicture, Donation, Rating, Comment, Category, Tag,
-    ProjectReport, CommentReport # Import new report models
+    ProjectReport # Import new report models
 )
 
 User = get_user_model()
@@ -81,20 +81,20 @@ class ProjectReportSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class CommentReportSerializer(serializers.ModelSerializer):
-    """Serializer for reporting comments"""
-    reporter_username = serializers.CharField(source='reporter.username', read_only=True)
+# class CommentReportSerializer(serializers.ModelSerializer):
+#     """Serializer for reporting comments"""
+#     reporter_username = serializers.CharField(source='reporter.username', read_only=True)
 
-    class Meta:
-        model = CommentReport
-        fields = ['id', 'comment', 'reporter', 'reporter_username', 'report_type', 'reason', 'created_at', 'status']
-        read_only_fields = ['reporter', 'created_at', 'status']
+#     class Meta:
+#         model = CommentReport
+#         fields = ['id', 'comment', 'reporter', 'reporter_username', 'report_type', 'reason', 'created_at', 'status']
+#         read_only_fields = ['reporter', 'created_at', 'status']
 
-    def create(self, validated_data):
-        validated_data['reporter'] = self.context['request'].user
-        if 'comment' not in validated_data:
-            raise serializers.ValidationError("Comment is required for a comment report.")
-        return super().create(validated_data)
+#     def create(self, validated_data):
+#         validated_data['reporter'] = self.context['request'].user
+#         if 'comment' not in validated_data:
+#             raise serializers.ValidationError("Comment is required for a comment report.")
+#         return super().create(validated_data)
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -130,15 +130,13 @@ class ProjectListSerializer(serializers.ModelSerializer):
     # Directly use model fields or properties that reflect current/average values
     total_donations = serializers.SerializerMethodField() # From @property
     percent_funded = serializers.SerializerMethodField()   # From @property
-    average_rating = serializers.FloatField(read_only=True) # Direct field on Project model
-    donations_count = serializers.IntegerField(read_only=True) # From annotation or Count('donations')
-    
+   
     class Meta:
         model = Project
         fields = [
             'id', 'title', 'details', 'category', 'pictures',
-            'total_target', 'total_donations', 'percent_funded', 'average_rating',
-            'donations_count', 'owner', 'status', 'is_featured',
+            'total_target', 'total_donations', 'percent_funded', 
+            'owner', 'status', 'is_featured',
             'start_time', 'end_time', 'created_at', 'updated_at'
         ]
 
@@ -172,9 +170,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     ratings = RatingSerializer(many=True, read_only=True)
     comments = CommentSerializer(many=True, read_only=True) 
 
-    # Direct fields from model (cached values)
-    average_rating = serializers.FloatField(read_only=True)
-    rating_count = serializers.IntegerField(read_only=True)
+
 
     # Calculated properties from the model
     total_donations = serializers.SerializerMethodField()
@@ -186,7 +182,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'details', 'total_target', 'owner', 'category', 'tags',
             'start_time', 'end_time', 'created_at', 'updated_at', 'status', 'is_featured',
-            'average_rating', 'rating_count', # Direct model fields
+          
             'pictures', 'donations', 'ratings', 'comments', # Nested serializers
             'total_donations', 'percent_funded', 'donations_count', # Calculated properties/methods
         ]
@@ -286,7 +282,7 @@ class ProjectCreateUpdateSerializer(serializers.ModelSerializer):
         if category: # Update category if provided
             instance.category = category
         
-        instance.tags.set(tags) # Update many-to-many relationship
+        instance.tags.set(tags) 
 
         instance.save()
         return instance

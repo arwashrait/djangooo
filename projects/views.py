@@ -140,66 +140,66 @@ class ProjectDeleteView(LoginRequiredMixin, DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
 
-def add_comment(request, pk):
-    """Function-based view to add a comment or reply to a project."""
-    project = get_object_or_404(Project, pk=pk)
-    if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.user = request.user
-            comment.project = project
+# def add_comment(request, pk):
+#     """Function-based view to add a comment or reply to a project."""
+#     project = get_object_or_404(Project, pk=pk)
+#     if request.method == 'POST':
+#         form = CommentForm(request.POST)
+#         if form.is_valid():
+#             comment = form.save(commit=False)
+#             comment.user = request.user
+#             comment.project = project
             
-            # Handle replies
-            parent_id = form.cleaned_data.get('parent_id')
-            if parent_id:
-                try:
-                    parent_comment = Comment.objects.get(id=parent_id, project=project)
-                    comment.parent = parent_comment
-                except Comment.DoesNotExist:
-                    messages.error(request, "Parent comment not found.")
-                    return redirect('projects:detail', pk=pk)
+#             # Handle replies
+#             parent_id = form.cleaned_data.get('parent_id')
+#             if parent_id:
+#                 try:
+#                     parent_comment = Comment.objects.get(id=parent_id, project=project)
+#                     comment.parent = parent_comment
+#                 except Comment.DoesNotExist:
+#                     messages.error(request, "Parent comment not found.")
+#                     return redirect('projects:detail', pk=pk)
 
-            comment.save()
-            messages.success(request, "Comment added successfully!")
-        else:
-            messages.error(request, "Error adding comment. Please check your input.")
-    return redirect('projects:detail', pk=pk)
-
-
-def add_rating(request, pk):
-    """Function-based view to add or update a project rating."""
-    project = get_object_or_404(Project, pk=pk)
-    if request.method == 'POST':
-        form = RatingForm(request.POST)
-        if form.is_valid():
-            rating, created = Rating.objects.update_or_create(
-                user=request.user,
-                project=project,
-                defaults={'value': form.cleaned_data['value']}
-            )
-            # Update the cached average rating on the Project model
-            project.update_rating_summary()
-            messages.success(request, "Rating submitted successfully!")
-        else:
-            messages.error(request, "Error submitting rating. Please check your input.")
-    return redirect('projects:detail', pk=pk)
+#             comment.save()
+#             messages.success(request, "Comment added successfully!")
+#         else:
+#             messages.error(request, "Error adding comment. Please check your input.")
+#     return redirect('projects:detail', pk=pk)
 
 
-def make_donation(request, pk):
-    """Function-based view to handle project donations."""
-    project = get_object_or_404(Project, pk=pk)
-    if request.method == 'POST':
-        form = DonationForm(request.POST)
-        if form.is_valid():
-            donation = form.save(commit=False)
-            donation.user = request.user
-            donation.project = project
-            donation.save()
-            messages.success(request, f"Thank you for your donation of {donation.amount} EGP!")
-            # Optional: Update total donations cache on Project model if you add it.
-            # project.update_total_donations_cache()
-        else:
-            messages.error(request, "Error processing donation. Please check your amount.")
-    return redirect('projects:detail', pk=pk)
+# def add_rating(request, pk):
+#     """Function-based view to add or update a project rating."""
+#     project = get_object_or_404(Project, pk=pk)
+#     if request.method == 'POST':
+#         form = RatingForm(request.POST)
+#         if form.is_valid():
+#             rating, created = Rating.objects.update_or_create(
+#                 user=request.user,
+#                 project=project,
+#                 defaults={'value': form.cleaned_data['value']}
+#             )
+#             # Update the cached average rating on the Project model
+#             project.update_rating_summary()
+#             messages.success(request, "Rating submitted successfully!")
+#         else:
+#             messages.error(request, "Error submitting rating. Please check your input.")
+#     return redirect('projects:detail', pk=pk)
+
+
+# def make_donation(request, pk):
+#     """Function-based view to handle project donations."""
+#     project = get_object_or_404(Project, pk=pk)
+#     if request.method == 'POST':
+#         form = DonationForm(request.POST)
+#         if form.is_valid():
+#             donation = form.save(commit=False)
+#             donation.user = request.user
+#             donation.project = project
+#             donation.save()
+#             messages.success(request, f"Thank you for your donation of {donation.amount} EGP!")
+#             # Optional: Update total donations cache on Project model if you add it.
+#             # project.update_total_donations_cache()
+#         else:
+#             messages.error(request, "Error processing donation. Please check your amount.")
+#     return redirect('projects:detail', pk=pk)
 

@@ -29,8 +29,6 @@ class ProjectAdmin(admin.ModelAdmin):
         'total_target',
         'total_donations_collected', # Use the property name from models.py
         'percent_funded',           # Use the property name from models.py
-        'average_rating',           # Direct field from Project model
-        'rating_count',             # Direct field from Project model
         'end_time',
         'status',
         'is_featured',              # New field in Project model
@@ -106,12 +104,12 @@ class ProjectReportAdmin(admin.ModelAdmin):
     raw_id_fields = ('project', 'reporter')
     readonly_fields = ('created_at',)
 
-@admin.register(CommentReport)
-class CommentReportAdmin(admin.ModelAdmin):
-    list_display = ('comment', 'reporter', 'report_type', 'status', 'created_at')
-    list_filter = ('status', 'report_type', 'created_at')
-    search_fields = ('comment__content', 'reporter__username', 'reason')
-    raw_id_fields = ('comment', 'reporter')
-    readonly_fields = ('created_at',)
+# @admin.register(CommentReport)
+# class CommentReportAdmin(admin.ModelAdmin):
+#     list_display = ('comment', 'reporter', 'report_type', 'status', 'created_at')
+#     list_filter = ('status', 'report_type', 'created_at')
+#     search_fields = ('comment__content', 'reporter__username', 'reason')
+#     raw_id_fields = ('comment', 'reporter')
+#     readonly_fields = ('created_at',)
 
 

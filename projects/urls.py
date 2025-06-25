@@ -11,7 +11,7 @@ urlpatterns = [
     path('<int:pk>/delete/', views.ProjectDeleteView.as_view(), name='delete'),
 
     # Function-based views for form submissions
-    path('<int:pk>/comment/', views.add_comment, name='add_comment'),
-    path('<int:pk>/rate/', views.add_rating, name='add_rating'), # Renamed from 'rate' for clarity
-    path('<int:pk>/donate/', views.make_donation, name='make_donation'), # Renamed from 'donate' for clarity
+    # path('<int:pk>/comment/', views.add_comment, name='add_comment'),
+    # path('<int:pk>/rate/', views.add_rating, name='add_rating'), # Renamed from 'rate' for clarity
+    # path('<int:pk>/donate/', views.make_donation, name='make_donation'), # Renamed from 'donate' for clarity
 ]

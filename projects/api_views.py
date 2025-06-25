@@ -10,7 +10,7 @@ from datetime import timedelta # Good to have for time calculations
 # Import all necessary models from the current app
 from .models import (
     Project, Donation, Rating, ProjectPicture, Category, Tag,
-    Comment, ProjectReport, CommentReport # Include new report models
+    Comment, ProjectReport,  # Include new report models
 )
 
 # Import your serializers
@@ -18,7 +18,7 @@ from .serializers import (
     ProjectListSerializer, ProjectDetailSerializer,
     ProjectCreateUpdateSerializer, DonationSerializer,
     RatingSerializer, CommentSerializer,
-    ProjectReportSerializer, CommentReportSerializer # Include new report serializers
+    ProjectReportSerializer, # Include new report serializers
 )
 
 
@@ -40,8 +40,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return CommentSerializer
         elif self.action == 'report_project':
             return ProjectReportSerializer
-        elif self.action == 'report_comment': # Action for reporting comments
-            return CommentReportSerializer
+      
         return ProjectDetailSerializer # Default to detail serializer
 
     def get_permissions(self):
@@ -64,8 +63,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'pictures', 'tags', 'donations', 'ratings', 'comments', 'project_reports' # Added comments, project_reports
         ).annotate(
             total_donations_annotated=Sum('donations__amount'),
-            average_rating_annotated=Avg('ratings__value'), # Corrected: 'value' field in Rating model
-            donations_count_annotated=Count('donations')
+           
         ).filter(status='active') # Filter for active campaigns
 
         # Apply search and filter parameters from the request
@@ -245,7 +243,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         )
 
         # Update cached average rating on the project
-        project.update_rating_summary() # Call the method on the Project model
+        # project.update_rating_summary() # Call the method on the Project model
 
         serializer = RatingSerializer(rating)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -352,21 +350,21 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Check if user already reported this comment
-        if CommentReport.objects.filter(comment=comment_to_report, reporter=request.user).exists():
-            return Response(
-                {'error': 'You have already reported this comment.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # # Check if user already reported this comment
+        # if CommentReport.objects.filter(comment=comment_to_report, reporter=request.user).exists():
+        #     return Response(
+        #         {'error': 'You have already reported this comment.'},
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
 
-        serializer = CommentReportSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save(comment=comment_to_report) # Save with the comment instance
-            return Response(
-                {'message': 'Comment reported successfully. It will be reviewed by admins.'},
-                status=status.HTTP_201_CREATED
-            )
-        # No else branch needed due to raise_exception=True
+        # serializer = CommentReportSerializer(data=request.data, context={'request': request})
+        # if serializer.is_valid(raise_exception=True):
+        #     serializer.save(comment=comment_to_report) # Save with the comment instance
+        #     return Response(
+        #         {'message': 'Comment reported successfully. It will be reviewed by admins.'},
+        #         status=status.HTTP_201_CREATED
+        #     )
+        # # No else branch needed due to raise_exception=True
 
 
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
@@ -380,7 +378,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
             status='active'
         ).exclude(id=project.id).annotate(
             total_donations_annotated=Sum('donations__amount'),
-            average_rating_annotated=Avg('ratings__value')
         ).distinct().order_by('-created_at')[:4] # Order for consistent results and limit to 4
 
         serializer = ProjectListSerializer(similar_projects, many=True, context={'request': request})
@@ -393,21 +390,16 @@ class ProjectViewSet(viewsets.ModelViewSet):
         # Base queryset for active projects with common annotations
         base_queryset = Project.objects.filter(status='active').annotate(
             total_donations_annotated=Sum('donations__amount'),
-            average_rating_annotated=Avg('ratings__value'),
-            donations_count_annotated=Count('donations') # Added for consistency, though not strictly used in default serializer
+            
         )
 
-        # Top 5 rated projects (filter for projects that have been rated)
-        top_rated = base_queryset.filter(average_rating_annotated__isnull=False).order_by('-average_rating_annotated')[:5]
-
-        # Latest 5 projects
         latest = base_queryset.order_by('-created_at')[:5]
 
         # Featured 5 projects (using the new `is_featured` field)
         featured = base_queryset.filter(is_featured=True).order_by('-created_at')[:5]
 
         return Response({
-            'top_rated': ProjectListSerializer(top_rated, many=True, context={'request': request}).data,
+            # 'top_rated': ProjectListSerializer(top_rated, many=True, context={'request': request}).data,
             'latest': ProjectListSerializer(latest, many=True, context={'request': request}).data,
             'featured': ProjectListSerializer(featured, many=True, context={'request': request}).data,
         }, status=status.HTTP_200_OK)

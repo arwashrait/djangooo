@@ -51,9 +51,7 @@ class Project(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     is_featured = models.BooleanField(default=False) # Added as per API views usage
 
-    # Cached average rating and count (updated via signals or custom save)
-    average_rating = models.FloatField(default=0.0) # Un-commented and explicitly added
-    rating_count = models.PositiveIntegerField(default=0)
+ 
 
     def __str__(self):
         return self.title
@@ -79,12 +77,6 @@ class Project(models.Model):
         # Checks if the campaign is active and not past its end time
         return self.status == 'active' and self.end_time > timezone.now()
 
-    def update_rating_summary(self):
-        # Method to update cached average_rating and rating_count
-        agg = self.ratings.aggregate(avg_value=Avg('value'), count_value=Count('value'))
-        self.average_rating = agg['avg_value'] if agg['avg_value'] is not None else 0.0
-        self.rating_count = agg['count_value'] if agg['count_value'] is not None else 0
-        self.save(update_fields=['average_rating', 'rating_count'])
 
 
 class ProjectPicture(models.Model):
@@ -174,17 +166,17 @@ class ProjectReport(Report): # Concrete model for project reports
     def __str__(self):
         return f"Report on Project '{self.project.title}' by {self.reporter.username}"
 
-class CommentReport(Report): # Concrete model for comment reports
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_reports')
+# class CommentReport(Report): # Concrete model for comment reports
+#     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_reports')
 
-    class Meta:
-        # Ensure a user can only report a comment once
-        unique_together = ('comment', 'reporter')
-        verbose_name = "Comment Report"
-        verbose_name_plural = "Comment Reports"
+#     class Meta:
+#         # Ensure a user can only report a comment once
+#         unique_together = ('comment', 'reporter')
+#         verbose_name = "Comment Report"
+#         verbose_name_plural = "Comment Reports"
 
-    def __str__(self):
-        return f"Report on Comment by {self.comment.user.username} on '{self.comment.project.title}'"
+#     def __str__(self):
+#         return f"Report on Comment by {self.comment.user.username} on '{self.comment.project.title}'"
 
 
 class Rating(models.Model):
