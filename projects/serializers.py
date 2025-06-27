@@ -81,20 +81,6 @@ class ProjectReportSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-# class CommentReportSerializer(serializers.ModelSerializer):
-#     """Serializer for reporting comments"""
-#     reporter_username = serializers.CharField(source='reporter.username', read_only=True)
-
-#     class Meta:
-#         model = CommentReport
-#         fields = ['id', 'comment', 'reporter', 'reporter_username', 'report_type', 'reason', 'created_at', 'status']
-#         read_only_fields = ['reporter', 'created_at', 'status']
-
-#     def create(self, validated_data):
-#         validated_data['reporter'] = self.context['request'].user
-#         if 'comment' not in validated_data:
-#             raise serializers.ValidationError("Comment is required for a comment report.")
-#         return super().create(validated_data)
 
 
 class CommentSerializer(serializers.ModelSerializer):

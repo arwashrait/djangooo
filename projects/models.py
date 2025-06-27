@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.urls import reverse
-from django.db.models import Sum, Avg,Count # Make sure Sum and Avg are imported
+from django.db.models import Sum, Avg,Count 
 import os
 
 
@@ -13,13 +13,13 @@ class Category(models.Model):
     description = models.TextField(blank=True)
 
     class Meta:
-        verbose_name_plural = "Categories" # Good practice for admin display
+        verbose_name_plural = "Categories" 
 
     def __str__(self):
         return self.name
 
 class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True) # Tags should ideally be unique
+    name = models.CharField(max_length=50, unique=True) 
 
     def __str__(self):
         return self.name
@@ -29,7 +29,7 @@ class Project(models.Model):
         ('active', 'Active'),
         ('completed', 'Completed'),
         ('canceled', 'Canceled'),
-        ('expired', 'Expired'), # Add an expired status for campaigns past end_time
+        ('expired', 'Expired'), 
     )
 
     title = models.CharField(max_length=200)
@@ -80,7 +80,7 @@ class Project(models.Model):
 
 
 class ProjectPicture(models.Model):
-    project = models.ForeignKey(Project, related_name='pictures', on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, related_name='pictures', on_delete=models.SET_NULL,null=True)
     image = models.ImageField(upload_to='projects/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -166,18 +166,6 @@ class ProjectReport(Report): # Concrete model for project reports
     def __str__(self):
         return f"Report on Project '{self.project.title}' by {self.reporter.username}"
 
-# class CommentReport(Report): # Concrete model for comment reports
-#     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='comment_reports')
-
-#     class Meta:
-#         # Ensure a user can only report a comment once
-#         unique_together = ('comment', 'reporter')
-#         verbose_name = "Comment Report"
-#         verbose_name_plural = "Comment Reports"
-
-#     def __str__(self):
-#         return f"Report on Comment by {self.comment.user.username} on '{self.comment.project.title}'"
-
 
 class Rating(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='ratings') # ADDED related_name='ratings'
@@ -192,17 +180,5 @@ class Rating(models.Model):
     def __str__(self):
         return f"{self.value} stars by {self.user.username} for {self.project.title}"
 
-# Optional: Signals to update average_rating and rating_count on Project
-# You'd typically put this in a separate file (e.g., projects/signals.py) and import in projects/apps.py
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 
-@receiver([post_save, post_delete], sender=Rating)
-def update_project_rating_summary(sender, instance, **kwargs):
-    """
-    Signal to update Project's cached average_rating and rating_count
-    whenever a Rating is saved or deleted.
-    """
-    if instance.project:
-        instance.project.update_rating_summary()
 
